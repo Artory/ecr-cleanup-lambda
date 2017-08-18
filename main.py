@@ -19,15 +19,18 @@ import requests
 
 REGION = None
 DRYRUN = None
+REPOSITORY = None
 IMAGES_TO_KEEP = None
 
 def initialize():
     global REGION
     global DRYRUN
+    global REPOSITORY
     global IMAGES_TO_KEEP
 
-    REGION = os.environ.get('REGION', "None")
-    DRYRUN = os.environ.get('DRYRUN', "false").lower()
+    REGION = os.environ.get('REGION', "eu-central-1")
+    REPOSITORY = os.environ.get("REPOSITORY")
+    DRYRUN = os.environ.get('DRYRUN', "true").lower()
     if DRYRUN == "false":
         DRYRUN = False
     else:
@@ -85,9 +88,14 @@ def discover_delete_images(regionname):
     for image in running_containers:
         print(image)
 
+    print(REPOSITORY)
+
     for repository in repositories:
         print ("------------------------")
-        print("Starting with repository :"+repository['repositoryUri'])
+        if repository['repositoryUri'] != REPOSITORY:
+            print("Ignoring repository: "+ repository['repositoryUri'])
+            continue
+        print("Starting with repository: "+repository['repositoryUri'])
         deletesha = []
         deletetag = []
         tagged_images = []
@@ -116,7 +124,7 @@ def discover_delete_images(regionname):
                     if imageurl == runningimages:
                         if imageurl not in running_sha:
                             running_sha.append(image['imageDigest'])
-                            
+
         print("Number of running images found {}".format(len(running_sha)))
 
         for image in tagged_images:
@@ -183,8 +191,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deletes stale ECR images')
     parser.add_argument('-dryrun', help='Prints the repository to be deleted without deleting them', default='true', action='store', dest='dryrun')
     parser.add_argument('-imagestokeep', help='Number of image tags to keep', default='100', action='store', dest='imagestokeep')
-    parser.add_argument('-region', help='ECR/ECS region', default=None, action='store', dest='region')
-
+    parser.add_argument('-region', help='ECR/ECS region', default='eu-central-1', action='store', dest='region')
+    parser.add_argument('-repository', help='Repository URI', default='452285145891.dkr.ecr.eu-central-1.amazonaws.com/artory/registry-app', action='store', dest='repository')
     args = parser.parse_args()
     if args.region:
         os.environ["REGION"] = args.region
@@ -192,4 +200,5 @@ if __name__ == '__main__':
         os.environ["REGION"] = "None"
     os.environ["DRYRUN"] = args.dryrun.lower()
     os.environ["IMAGES_TO_KEEP"] = args.imagestokeep
+    os.environ["REPOSITORY"] = args.repository
     handler(request, None)
