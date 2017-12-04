@@ -49,6 +49,7 @@ def handler(event, context):
         discover_delete_images(REGION)
 
 def discover_delete_images(regionname):
+    print("Dry run is " + ("on" if DRYRUN else "off"))
     print("Discovering images in "+regionname)
     ecr_client = boto3.client('ecr', region_name=regionname)
 
@@ -177,7 +178,7 @@ def delete_images(ecr_client, deletesha, deletetag, id, name):
             else:
                 print("registryId:"+id)
                 print("repositoryName:"+name)
-                print("Deleting {} chank of images".format(i))
+                print("Deleting {} chunk of images".format(i))
                 print("imageIds:", end='')
                 print(deletesha_chunk)
     if deletetag:
